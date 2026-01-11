@@ -1,12 +1,16 @@
+// Fixed grade points as per relative grading regulation
 const gradeMap = {
     "O": 10,
     "A+": 9,
     "A": 8,
     "B+": 7,
     "B": 6,
-    "C": 5
+    "C": 5,
+    "P": 4,
+    "F": 0
 };
 
+// Subjects and credits
 const subjects = [
     { name: "FLAT", credits: 3 },
     { name: "DBMS", credits: 4 },
@@ -17,6 +21,7 @@ const subjects = [
     { name: "MB", credits: 3 }
 ];
 
+// Grade dropdown options (NO decimals, NO percentiles)
 const gradeOptions = `
 <option value="">Select Grade</option>
 <option>O</option>
@@ -25,10 +30,13 @@ const gradeOptions = `
 <option>B+</option>
 <option>B</option>
 <option>C</option>
+<option>P</option>
+<option>F</option>
 `;
 
 const container = document.getElementById("subjects");
 
+// Render subject cards
 subjects.forEach((sub, i) => {
     container.innerHTML += `
         <div class="subject">
@@ -67,32 +75,34 @@ function calculateSGPA() {
     let totalGradePoints = 0;
     let totalCredits = 0;
 
-    subjects.forEach((sub, i) => {
-        let credits = sub.credits === "select"
+    for (let i = 0; i < subjects.length; i++) {
+        let credits = subjects[i].credits === "select"
             ? document.getElementById(`cred_${i}`).value
-            : sub.credits;
+            : subjects[i].credits;
 
         let s1 = document.getElementById(`s1_${i}`).value;
         let s2 = document.getElementById(`s2_${i}`).value;
         let le = document.getElementById(`le_${i}`).value;
 
         if (!credits || !s1 || !s2 || !le) {
-            alert("Please select all grades and credits");
-            throw new Error("Incomplete input");
+            alert("Please select all grades and credits.");
+            return;
         }
 
-        let finalGP =
+        // 30–45–25 model on RELATIVE grades
+        let finalGradePoint =
             gradeMap[s1] * 0.30 +
             gradeMap[s2] * 0.45 +
             gradeMap[le] * 0.25;
 
-        totalGradePoints += finalGP * credits;
+        totalGradePoints += finalGradePoint * credits;
         totalCredits += Number(credits);
-    });
+    }
 
+    // CLAD
     let cladGrade = document.getElementById("clad").value;
     if (!cladGrade) {
-        alert("Please select CLAD grade");
+        alert("Please select CLAD grade.");
         return;
     }
 
@@ -100,6 +110,7 @@ function calculateSGPA() {
     totalCredits += 1;
 
     let sgpa = (totalGradePoints / totalCredits).toFixed(2);
+
     document.getElementById("result").innerText =
         `SGPA: ${sgpa}  |  Total Credits: ${totalCredits}`;
 }
