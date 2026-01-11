@@ -1,5 +1,5 @@
-// Fixed grade points as per relative grading regulation
-const gradeMap = {
+// Fixed grade points
+const gradePoints = {
     "O": 10,
     "A+": 9,
     "A": 8,
@@ -10,7 +10,18 @@ const gradeMap = {
     "F": 0
 };
 
-// Subjects and credits
+// Relative grading bands (percentile-based)
+function percentageToGrade(p) {
+    if (p >= 93.3) return "O";
+    if (p >= 84.1) return "A+";
+    if (p >= 69.1) return "A";
+    if (p >= 30.8) return "B+";
+    if (p >= 15.8) return "B";
+    if (p >= 6.6)  return "C";
+    if (p >= 2.2)  return "P";
+    return "F";
+}
+
 const subjects = [
     { name: "FLAT", credits: 3 },
     { name: "DBMS", credits: 4 },
@@ -21,7 +32,6 @@ const subjects = [
     { name: "MB", credits: 3 }
 ];
 
-// Grade dropdown options (NO decimals, NO percentiles)
 const gradeOptions = `
 <option value="">Select Grade</option>
 <option>O</option>
@@ -36,7 +46,7 @@ const gradeOptions = `
 
 const container = document.getElementById("subjects");
 
-// Render subject cards
+// Render subjects
 subjects.forEach((sub, i) => {
     container.innerHTML += `
         <div class="subject">
@@ -54,17 +64,17 @@ subjects.forEach((sub, i) => {
             <div class="grid">
                 <div>
                     <label>Sessional 1 (30%)</label>
-                    <select class="s1" id="s1_${i}">${gradeOptions}</select>
+                    <select id="s1_${i}">${gradeOptions}</select>
                 </div>
 
                 <div>
                     <label>Sessional 2 (45%)</label>
-                    <select class="s2" id="s2_${i}">${gradeOptions}</select>
+                    <select id="s2_${i}">${gradeOptions}</select>
                 </div>
 
                 <div>
                     <label>Learning Engagement (25%)</label>
-                    <select class="le" id="le_${i}">${gradeOptions}</select>
+                    <select id="le_${i}">${gradeOptions}</select>
                 </div>
             </div>
         </div>
@@ -89,24 +99,31 @@ function calculateSGPA() {
             return;
         }
 
-        // 30–45–25 model on RELATIVE grades
-        let finalGradePoint =
-            gradeMap[s1] * 0.30 +
-            gradeMap[s2] * 0.45 +
-            gradeMap[le] * 0.25;
+        // Step 1: weighted score (0–10)
+        let weightedScore =
+            gradePoints[s1] * 0.30 +
+            gradePoints[s2] * 0.45 +
+            gradePoints[le] * 0.25;
 
-        totalGradePoints += finalGradePoint * credits;
+        // Step 2: convert to percentage
+        let percentage = weightedScore * 10;
+
+        // Step 3: map to relative grade
+        let finalGrade = percentageToGrade(percentage);
+
+        // Step 4: fixed grade point × credits
+        totalGradePoints += gradePoints[finalGrade] * credits;
         totalCredits += Number(credits);
     }
 
-    // CLAD
-    let cladGrade = document.getElementById("clad").value;
-    if (!cladGrade) {
+    // CLAD (already final grade)
+    let clad = document.getElementById("clad").value;
+    if (!clad) {
         alert("Please select CLAD grade.");
         return;
     }
 
-    totalGradePoints += gradeMap[cladGrade] * 1;
+    totalGradePoints += gradePoints[clad] * 1;
     totalCredits += 1;
 
     let sgpa = (totalGradePoints / totalCredits).toFixed(2);
